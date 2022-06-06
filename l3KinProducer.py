@@ -424,8 +424,8 @@ class l3KinProducer(Module):
 
                     for i in self.temp:
                         self.leptonicsum = 0
-                        self.bJetTLorentz = self.leptonic[0]
-                        self.neutrinoTLorentz = self.leptonic[1]
+                        self.bJetTLorentz = self.leptonic[1]
+                        self.neutrinoTLorentz = self.leptonic[0]
                         self.leptonicsum = (self.bJetTLorentz + self.neutrinoTLorentz + self.ZH3l_XLepton[0]).M()
                         self.hadronicsum = (i[0] + i[1][0] + i[1][1]).M()
                         self.tempChiSquare = TMath.Power((self.leptonicsum-self.mtrue1)/self.sigma1,2) + TMath.Power((self.hadronicsum-self.mtrue2)/self.sigma2,2)
@@ -451,8 +451,8 @@ class l3KinProducer(Module):
                     self.hadronic2 = self.temp
                     for i in self.temp2:
                         self.leptonicsum2 = 0
-                        self.bJetTLorentz2 = self.leptonic2[0]
-                        self.neutrinoTLorentz2 = self.leptonic2[1]
+                        self.bJetTLorentz2 = self.leptonic2[1]
+                        self.neutrinoTLorentz2 = self.leptonic2[0]
                         self.leptonicsum2 = (self.bJetTLorentz2 + self.neutrinoTLorentz2 +self.ZH3l_XLepton[0]).M()
                         self.hadronicsum2 = (i[0] + i[1][0] + i[1][1]).M()
                         self.tempChiSquare2 = TMath.Power((self.leptonicsum2-self.mtrue1)/self.sigma1,2) + TMath.Power((self.hadronicsum2-self.mtrue2)/self.sigma2,2)
