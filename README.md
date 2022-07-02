@@ -14,3 +14,7 @@
 # other
 - how many neutrino solutions were 'real' as opposed to complex
 - ideally, implement ML for neutrino solution
+
+## notes re: changes in branches
+- UL now doesn't save the btag for CleanJets. So, need to create a new 4 vector for that
+- new version of l3Kin requires an import of itertools, TMath 
