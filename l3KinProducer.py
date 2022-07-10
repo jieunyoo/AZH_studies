@@ -536,7 +536,7 @@ class l3KinProducer(Module):
                             self.bjet1Nu1 = self.bJetTLorentz
                             self.bjet2Nu1 = i[0]
                             self.hadronicJet1Nu1 = i[1][0]
-                            self.hadronicJet1Nu2 = i[1][1]
+                            self.hadronicJet2Nu1 = i[1][1]
 
             #print('getting combinations for second neutrino')
             #this matches the second possible neutrino solution with every single combination
