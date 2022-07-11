@@ -574,6 +574,7 @@ class l3KinProducer(Module):
                 self.hadronicJet2 = self.hadronicJet2Nu1
                 self.bjet1 = self.bjet1Nu1
                 self.bjet2 = self.bjet2Nu1
+                self.neutrino = self.neutrinoTLorentz
             else:
                 self.bestChiSquare = self.bestChiSquareNu2
                 self.bestLeptonic = self.bestLeptonicNu2
@@ -582,6 +583,7 @@ class l3KinProducer(Module):
                 self.hadronicJet2 = self.hadronicJet2Nu2
                 self.bjet1 = self.bjet1Nu2
                 self.bjet2 = self.bjet2Nu2
+                self.neutrino = self.neutrinoTLorentz2
 
             print('************************************************')
             print('bestChiSquare',self.bestChiSquare)
