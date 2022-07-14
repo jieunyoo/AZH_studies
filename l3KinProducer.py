@@ -426,7 +426,7 @@ class l3KinProducer(Module):
                     self.bJetList.append(i[0])
 
         #require: >= 4 jets, >= 2-btagged jets, OSSF (opp sign same flavor lepton), also jets have pt > 30 and abs. eta < 4.7
-        if self.ZH3l_isOk and self.pass4JetCut and self.passBJetCut and self.ZH3l_XLepton[0] != -9999:
+        if self.ZH3l_isOk and self.pass4JetCut and self.passBJetCut and self.ZH3l_XLepton[0] != -9999 and len(self.AZH_nonbJet) >= 2:
             self.passSelection = True
         else:
             self.passSelection = False
