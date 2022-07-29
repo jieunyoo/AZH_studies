@@ -57,13 +57,10 @@ class l3KinProducer(Module):
         'ZH3l_pTZ'       : (["F"], {}),
         'ZH3l_checkmZ'   : (["F"], {}),
 
-        'AZH_ChiSquare_HadronicTop' : (["F"], {}),
-        'AZH_ChiSquare_LeptonicTop' : (["F"], {}),
-        'AZH_ptZ': (["F"], {}),
         'AZH_mA_minus_mH': (["F"], {}),
-        'AZH_Zmass':  (["F"], {}),
         'AZH_Amass':  (["F"], {}),
         'AZH_Hmass' : (["F"], {}),
+        'AZH_ChiSquare' : (["F"], {}),
     }
 
     def __init__(self, branch_map=''):
@@ -312,47 +309,27 @@ class l3KinProducer(Module):
         return self.checkZmass
 
 #****************************************************************************************************************
-
-    def AZH_ChiSquare_HadronicTop(self):
-        if self.passSelection is True:
-            return self.bestHadronic
-        else:
-            return -9999
-
-    def AZH_ChiSquare_LeptonicTop(self):
-        if self.passSelection is True:
-            return self.bestLeptonic
-        else:
-            return -9999
-
-    def AZH_Zmass(self):
-        if self.passSelection:
-            return self.checkZmass
-        else:
-            return -9999
-        #self.checkZmass was defined above in setXLepton
-
-    def AZH_ptZ(self):
-        if self.passSelection is True:
-            return self.pTZ
-        else:
-            return -9999
-
     def AZH_mA_minus_mH(self):
-        if self.passSelection is True:
-            return (self.hadronicJet1 + self.hadronicJet2 + self.bjet1 + self.bjet2 + self.neutrino + self.ZH3l_XLepton[0] + self.Zlepton1+self.Zlepton2).M()-(self.hadronicJet1 + self.hadronicJet2 + self.bjet1 + self.bjet2 + self.neutrino + self.ZH3l_XLepton[0]).M()
+        if self.passSelection:
+            return (self.hadronicTopJet1 + self.hadronicTopJet2 + self.hadronicTopJet3 + self.leptonicTopJet1 + self.neutrino + self.ZH3l_XLepton[0] + self.Zlepton1+self.Zlepton2).M()-(self.hadronicTopJet1 + self.hadronicTopJet2 + self.hadronicTopJet3 + self.leptonicTopJet1 + self.neutrino + self.ZH3l_XLepton[0]).M()
         else:
             return -9999
 
     def AZH_Amass(self):
-        if self.passSelection is True:
-            return (self.hadronicJet1 + self.hadronicJet2 + self.bjet1 + self.bjet2 + self.neutrino + self.ZH3l_XLepton[0] + self.Zlepton1 + self.Zlepton2).M()
+        if self.passSelection:
+            return (self.hadronicTopJet1 + self.hadronicTopJet2 + self.hadronicTopJet3 + self.leptonicTopJet1 + self.neutrino + self.ZH3l_XLepton[0] + self.Zlepton1 + self.Zlepton2).M()
         else:
             return -9999
 
     def AZH_Hmass(self):
-        if self.passSelection is True:
-            return (self.hadronicJet1 + self.hadronicJet2 + self.bjet1 + self.bjet2 + self.neutrino + self.ZH3l_XLepton[0]).M()
+        if self.passSelection:
+            return (self.hadronicTopJet1 + self.hadronicTopJet2 + self.hadronicTopJet3 + self.leptonicTopJet1 + self.neutrino + self.ZH3l_XLepton[0]).M()
+        else:
+            return -9999
+
+    def AZH_ChiSquare(self):
+        if self.passSelection:
+            return self.bestChiSquare
         else:
             return -9999
 
@@ -394,202 +371,142 @@ class l3KinProducer(Module):
             self.CleanJet_4vecId_AZH.append((ROOT.TLorentzVector(), Jet[j.jetIdx].btagDeepB))
             self.CleanJet_4vecId_AZH[-1][0].SetPtEtaPhiM(j.pt, j.eta, j.phi, 0)
 
-
-#****For azh studies
+        #****For azh studies
         self.AZH_CleanJet_4vecId = []
         self.jetCut_AZH = []
         self.bJetCollection = []
-        self.AZH_nonbJet = []
         self.pass4JetCut = False
         self.passBJetCut = False
         self.passSelection = False
-        self.bJetList = []
-        self.nonbJetList = []
 
         if self.ZH3l_isOk:
             self.jetCut_AZH = [ j for j in self.CleanJet_4vecId_AZH if j[0].Pt() > 30 and abs(j[0].Eta()) < 4.7]
             self.AZH_CleanJet_4vecId = [ j for j in self.jetCut_AZH if len(self.jetCut_AZH) >= 4]
-            
-            #require >= 4 jets
             if len(self.AZH_CleanJet_4vecId) >= 4: self.pass4JetCut = True
-
-            if self.pass4JetCut == True:
+            if self.pass4JetCut:
                 self.bJetCollection = [ j for j in self.AZH_CleanJet_4vecId if j[1] > 0.4941]
-                self.AZH_nonbJet = [j for j in self.AZH_CleanJet_4vecId if j[1] <= 0.4941]
-
                 if len(self.bJetCollection) >=2:
                     self.passBJetCut = True
-                #these separate lists are to make it easier to grab the TLorentzVector since I don't care about the b-tag which is j[1] in above collection
-                for i in self.AZH_nonbJet:
-                    self.nonbJetList.append(i[0])
-                for i in self.bJetCollection:
-                    self.bJetList.append(i[0])
-
         #require: >= 4 jets, >= 2-btagged jets, OSSF (opp sign same flavor lepton), also jets have pt > 30 and abs. eta < 4.7
-        if self.ZH3l_isOk and self.pass4JetCut and self.passBJetCut and self.ZH3l_XLepton[0] != -9999 and len(self.AZH_nonbJet) >= 2:
+        if self.ZH3l_isOk and self.pass4JetCut and self.passBJetCut and self.ZH3l_XLepton[0] != -9999:
             self.passSelection = True
         else:
             self.passSelection = False
 
-        self.bestChiSquare = 99999
-        self.bestLeptonic = 99999
-        self.bestHadronic = 99999
-
         #CHISQUARE**********************************************************************************************************
+        self.bestChiSquare = 99999
         if self.passSelection:
-            self.hadronicJet1 = ROOT.TLorentzVector()
-            self.hadronicJet2 = ROOT.TLorentzVector()
-            self.bjet1 = ROOT.TLorentzVector()
-            self.bjet2 = ROOT.TLorentzVector()
+            self.hadronicTopJet1 = ROOT.TLorentzVector()
+            self.hadronicTopJet2 = ROOT.TLorentzVector()
+            self.hadronicTopJet3 = ROOT.TLorentzVector()
+            self.leptonicTopJet1 = ROOT.TLorentzVector()
             self.neutrino = ROOT.TLorentzVector()
-
             #NEUTRINO**********************************************************************************************************
-            #for getting the two possible neutrino solutions
             self.neutrino1 = ROOT.TLorentzVector()
             self.neutrino2 = ROOT.TLorentzVector()
             self.neutrinopz1 = 0
             self.neutrinopz2 = 0
             self.neutrinoEnergy1 = 0
             self.neutrinoEnergy2 = 0
-
             zeta = 0.5 * pow(80.4,2) + self.MET.Pt()*self.ZH3l_XLepton[0].Pt()*math.cos(self.ZH3l_XLepton[0].DeltaPhi(self.MET))
             sol = (pow(zeta,2)*pow(self.ZH3l_XLepton[0].Pz(),2)) / pow(self.ZH3l_XLepton[0].Pt(),4)  -  (pow(self.MET.Pt(),2)*pow(self.ZH3l_XLepton[0].E(),2) - pow(zeta,2)) / pow(self.ZH3l_XLepton[0].Pt(),2)
             if sol > 0:
                 sol = math.sqrt(sol)
             else:
                 sol = 0
-            #there are two possible pzs for neutrino; for generator level,  find the neutrino pz closest to the real one
-            #for recon level, want both because will test both in the chi-square (choose the soln that minimizes the chi-square)
             self.neutrinopz1 = (zeta * self.ZH3l_XLepton[0].Pz())/pow(self.ZH3l_XLepton[0].Pt(),2) + sol
             self.neutrinopz2 = (zeta * self.ZH3l_XLepton[0].Pz())/pow(self.ZH3l_XLepton[0].Pt(),2) - sol
-
             self.neutrinoEnergy1 = math.sqrt( pow(self.MET.Pt(),2) + pow(self.neutrinopz1,2) )
             self.neutrinoEnergy2 = math.sqrt( pow(self.MET.Pt(),2) + pow(self.neutrinopz2,2) )
-            #print('true neutrino PZ, guess1, guess2', self.neutrino.Pz(), self.neutrinopz1, self.neutrinopz2)
             self.neutrino1.SetPxPyPzE(self.MET.Px(),self.MET.Py(),self.neutrinopz1,self.neutrinoEnergy1)
             self.neutrino2.SetPxPyPzE(self.MET.Px(),self.MET.Py(),self.neutrinopz2,self.neutrinoEnergy2)
 
-            self.neutrinoList = []
-            self.neutrinoList.append(self.neutrino1)
-            self.neutrinoList.append(self.neutrino2)
-
             #get all the jet combinations**********************************************************************************************************
-            #do the Chisquare choosing from self.neutrinoList (just 2 elements), self.bJetList (>=2 bjets since required by cut), self.nonbJetList
-            self.jetCombs = list(combinations(self.nonbJetList,2))
+            self.hadronicTopJet1Nu1 = ROOT.TLorentzVector()
+            self.hadronicTopJet2Nu1 = ROOT.TLorentzVector()
+            self.hadronicTopJet3Nu1 = ROOT.TLorentzVector()
+            self.hadronicTopJet1Nu2 = ROOT.TLorentzVector()
+            self.hadronicTopJet2Nu2 = ROOT.TLorentzVector()
+            self.hadronicTopJet2Nu2 = ROOT.TLorentzVector()
+            self.leptonicJet1Nu1 = ROOT.TLorentzVector()
+            self.leptonicJet1Nu2 = ROOT.TLorentzVector()
 
-            self.bjets = self.bJetList
-            self.bjets2 = self.bjets[:]
-
-            self.tryThisList= [ self.neutrinoList, self.bjets]
-            self.leptonicCombs = list(itertools.product(*self.tryThisList))
-
-            self.middle_index = len(self.leptonicCombs)//2
-            self.first_half = self.leptonicCombs[:self.middle_index]
-            self.second_half = self.leptonicCombs[self.middle_index:]
-
-            self.bestChiSquareNu1 = 99999
-            self.bestChiSquareNu2 = 99999
-            self.bestLeptonicNu1 = 99999
-            self.bestHadronicNu1 = 99999
-            self.bestChiSquareNu2 = 99999
-            self.bestLeptonicNu2 = 99999
-            self.bestHadronicNu2 = 99999
-            self.hadronicJet1Nu1 = ROOT.TLorentzVector()
-            self.hadronicJet2Nu1 = ROOT.TLorentzVector()
-            self.hadronicJet1Nu2 = ROOT.TLorentzVector()
-            self.hadronicJet2Nu2 = ROOT.TLorentzVector()
-            self.bjet1Nu1 = ROOT.TLorentzVector()
-            self.bjet2Nu1 = ROOT.TLorentzVector()
-            self.bjet1Nu2 = ROOT.TLorentzVector()
-            self.bjet2Nu2 = ROOT.TLorentzVector()
-
-            #generator values from ttbar sample
-            # put in generator values (note: still need to add scale factors)
+            #generator values from ttbar sample, put in generator values (note: still need to add scale factors)
             self.mtrue1 = 168.7 #leptonic top
             self.mtrue2 = 163   #hadronic top
             self.sigma1 = 26.64
             self.sigma2 = 37.73
+            
+            self.bestChiSquareNu1 = 9999
+            self.bestChiSquareNu2 = 9999
+            self.leptonicBJetExistsNu1 = -9999
+            self.hadronicBJetExistsNu1 = -9999
+            self.leptonicBJetExistsNu2 = -9999
+            self.hadronicBJetExistsNu2 = -9999
 
-            #now really start the chi-square calc
-            #this matches the first possible neutrino solution with every single combination
-            for i,j in enumerate(self.first_half):
-                self.tempBJets = self.bjets[:]
-                if i < len(self.tempBJets):
-                    del self.tempBJets[i]
-                    self.BJetPlusJets = [self.tempBJets,self.jetCombs]
-                    self.temp =list(itertools.product(*self.BJetPlusJets))
-                    self.tempBJets = self.bjets[:]
-                    self.leptonic = j
-                    self.hadronic = self.temp
-
-                    for i in self.temp:
+            for i, j in enumerate(self.AZH_CleanJet_4vecId):
+                self.tempjets = self.AZH_CleanJet_4vecId[:]
+                if i < len(self.tempjets):
+                    del self.tempjets[i]
+                    combinationsOf3Jets = list(combinations(self.tempjets,3))
+                    self.tempjets = self.AZH_CleanJet_4vecId
+                    for k in combinationsOf3Jets:
                         self.leptonicsum = 0
-                        self.bJetTLorentz = self.leptonic[1]
-                        self.neutrinoTLorentz = self.leptonic[0]
-                        self.leptonicsum = (self.bJetTLorentz + self.neutrinoTLorentz + self.ZH3l_XLepton[0]).M()
-                        self.hadronicsum = (i[0] + i[1][0] + i[1][1]).M()
+                        self.hadronicsum = 0
+                        self.leptonicsum = (j[0] + self.neutrino1 + self.ZH3l_XLepton[0]).M()
+                        if j[1] > 0.4941:
+                            self.leptonicBJetExistsNu1 = 1
+                        self.hadronicsum = (k[0][0] + k[1][0] + k[2][0]).M()
+                        if k[0][1] or k[1][1] or k[2][1] > 0.4941:
+                            self.hadronicBJetExistsNu1 = 1
                         self.tempChiSquare = TMath.Power((self.leptonicsum-self.mtrue1)/self.sigma1,2) + TMath.Power((self.hadronicsum-self.mtrue2)/self.sigma2,2)
-                        if self.tempChiSquare < self.bestChiSquareNu1:
+                        if self.tempChiSquare < self.bestChiSquareNu1 and self.leptonicBJetExistsNu1 != -9999 and self.hadronicBJetExistsNu1 != -9999:
                             self.bestChiSquareNu1 = self.tempChiSquare
-                            self.bestHadronicNu1 = self.hadronicsum
-                            self.bestLeptonicNu1 = self.leptonicsum
-                            self.bjet1Nu1 = self.bJetTLorentz
-                            self.bjet2Nu1 = i[0]
-                            self.hadronicJet1Nu1 = i[1][0]
-                            self.hadronicJet2Nu1 = i[1][1]
+                            self.hadronicTopJet1Nu1 = k[0][0]
+                            self.hadronicTopJet2Nu1 = k[1][0]
+                            self.hadronicTopJet3Nu1 = k[2][0]
+                            self.leptonicJet1Nu1 = j[0]
+            #loop again for second neutrino
+            for i, j in enumerate(self.AZH_CleanJet_4vecId):
+                self.tempjetsNu2 = self.AZH_CleanJet_4vecId[:]
+                if i < len(self.tempjetsNu2):
+                    del self.tempjetsNu2[i]
+                    combinationsOf3JetsNu2 = list(combinations(self.tempjetsNu2,3))
+                    self.tempjetsNu2 = self.AZH_CleanJet_4vecId
+                    for k in combinationsOf3JetsNu2:
+                        self.leptonicsumNu2 = 0
+                        self.hadronicsumNu2 = 0
+                        self.leptonicsumNu2 = (j[0] + self.neutrino2 + self.ZH3l_XLepton[0]).M()
+                        if j[1] > 0.4941:
+                            self.leptonicBJetExistsNu2 = 1
+                        self.hadronicsumNu2 = (k[0][0] + k[1][0] + k[2][0]).M()
+                        if k[0][1] or k[1][1] or k[2][1] > 0.4941:
+                            self.hadronicBJetExistsNu2 = 1
+                        self.tempChiSquareNu2 = TMath.Power((self.leptonicsumNu2-self.mtrue1)/self.sigma1,2) + TMath.Power((self.hadronicsumNu2-self.mtrue2)/self.sigma2,2)
+                        if self.tempChiSquareNu2 < self.bestChiSquareNu2 and self.leptonicBJetExistsNu2 != -9999 and self.hadronicBJetExistsNu2 != -9999:
+                            self.bestChiSquareNu2 = self.tempChiSquareNu2
+                            self.hadronicTopJet1Nu2 = k[0][0]
+                            self.hadronicTopJet2Nu2 = k[1][0]
+                            self.hadronicTopJet3Nu2 = k[2][0]
+                            self.leptonicJet1Nu2 = j[0]
 
-            #print('getting combinations for second neutrino')
-            #this matches the second possible neutrino solution with every single combination
-            for i,j in enumerate(self.second_half):
-                self.tempBJets2 = self.bjets2
-                if i < len(self.tempBJets2):
-                    del self.tempBJets2[i]
-                    self.BJetPlusJets2 = [self.tempBJets2,self.jetCombs]
-                    self.temp2 =list(itertools.product(*self.BJetPlusJets2))
-                    self.tempBJets2 = self.bjets[:]
-                    self.leptonic2 = j
-                    self.hadronic2 = self.temp
-                    for i in self.temp2:
-                        self.leptonicsum2 = 0
-                        self.bJetTLorentz2 = self.leptonic2[1]
-                        self.neutrinoTLorentz2 = self.leptonic2[0]
-                        self.leptonicsum2 = (self.bJetTLorentz2 + self.neutrinoTLorentz2 +self.ZH3l_XLepton[0]).M()
-                        self.hadronicsum2 = (i[0] + i[1][0] + i[1][1]).M()
-                        self.tempChiSquare2 = TMath.Power((self.leptonicsum2-self.mtrue1)/self.sigma1,2) + TMath.Power((self.hadronicsum2-self.mtrue2)/self.sigma2,2)
-                        if self.tempChiSquare2 < self.bestChiSquareNu2:
-                            self.bestChiSquareNu2 = self.tempChiSquare2
-                            self.bestHadronicNu2 = self.hadronicsum2
-                            self.bestLeptonicNu2 = self.leptonicsum2
-                            self.bjet1Nu2 = self.bJetTLorentz2
-                            self.bjet2Nu2 = i[0]
-                            self.hadronicJet1Nu2 = i[1][0]
-                            self.hadronicJet2Nu2 = i[1][1]
-
-            #choose the best chisquared - will use either neutrino solution 1 or 2
             if self.bestChiSquareNu1 <= self.bestChiSquareNu2:
+                self.hadronicTopJet1 = self.hadronicTopJet1Nu1
+                self.hadronicTopJet2 = self.hadronicTopJet2Nu1
+                self.hadronicTopJet3 = self.hadronicTopJet3Nu1
+                self.leptonicTopJet1 = self.leptonicJet1Nu1
+                self.neutrino = self.neutrino1
                 self.bestChiSquare = self.bestChiSquareNu1
-                self.bestLeptonic = self.bestLeptonicNu1
-                self.bestHadronic = self.bestHadronicNu1
-                self.hadronicJet1 = self.hadronicJet1Nu1
-                self.hadronicJet2 = self.hadronicJet2Nu1
-                self.bjet1 = self.bjet1Nu1
-                self.bjet2 = self.bjet2Nu1
-                self.neutrino = self.neutrinoTLorentz
             else:
+                self.hadronicTopJet1 = self.hadronicTopJet1Nu2
+                self.hadronicTopJet2 = self.hadronicTopJet2Nu2
+                self.hadronicTopJet3 = self.hadronicTopJet3Nu2
+                self.leptonicTopJet1 = self.leptonicJet1Nu2
+                self.neutrino = self.neutrino2
                 self.bestChiSquare = self.bestChiSquareNu2
-                self.bestLeptonic = self.bestLeptonicNu2
-                self.bestHadronic = self.bestHadronicNu2
-                self.hadronicJet1 = self.hadronicJet1Nu2
-                self.hadronicJet2 = self.hadronicJet2Nu2
-                self.bjet1 = self.bjet1Nu2
-                self.bjet2 = self.bjet2Nu2
-                self.neutrino = self.neutrinoTLorentz2
 
-            print('************************************************')
-            print('bestChiSquare',self.bestChiSquare)
-            print('besthadronicTopMass', self.bestHadronic)
-            print('bestLeptonicTbarMass', self.bestLeptonic)
-
+            #print('************************************************')
+            #print('bestChiSquare',self.bestChiSquare)
 
         for nameBranchKey in self.newbranches.keys():
             self.out.fillBranch(nameBranchKey, getattr(self, nameBranchKey)());
